@@ -5,13 +5,14 @@ contract TicTacToe {
     bool gameFull;            // lock the registrations
     uint8 turn;               // 0 or 1 point to the next player turn (note starts from 0 so the owner always start first)
 
-    event InGame(bool);
-    event Placed(bool);
-    event Win(address);
+    event InGame(bool entered);
+    event Placed(bool positioned);
+    event Win(address winner);
 
     modifier checkTurn {
         if (players[turn] != msg.sender) {
-            revert();
+            // emit event
+            return;
         }
         _;
     }
@@ -20,7 +21,7 @@ contract TicTacToe {
         players[0] = msg.sender;
     }
 
-    function Register() public {
+    function register() public returns (bool) {
         if (gameFull) {
             InGame(false);
             return;
@@ -28,23 +29,24 @@ contract TicTacToe {
         players[1] = msg.sender;
         gameFull = true;
         InGame(true);
+        return true;
     }
 
-    function Move(uint8 x, uint8 y) public checkTurn {
+    function move(uint8 x, uint8 y) public checkTurn {
         if (board[x][y] != 0) {
             Placed(false);
             return;
         }
         board[x][y] = msg.sender;
-        if (checkWinBruteForce() == true) {
+        if (_checkWinBruteForce()) {
             Win(msg.sender);
             return;
         }
-        changeTurn();
+        _changeTurn();
         Placed(true);
     }
 
-    function checkWinBruteForce() private constant returns (bool win) {
+    function _checkWinBruteForce() internal constant returns (bool win) {
         // first line, first column
         if (board[0][0] == msg.sender) {
             if (board[0][1] == msg.sender && board[0][2] == msg.sender ||
@@ -71,7 +73,7 @@ contract TicTacToe {
         return false;
     }
 
-    function changeTurn() private {
+    function _changeTurn() internal {
         turn = (turn+1)%2;
     }
 
@@ -79,4 +81,5 @@ contract TicTacToe {
     //     if (x > 2 || y > 2) return true;
     //     return (p == board[x][y]) && (checkWin(x+1,y, p) || checkWin(x,y+1,p));
     // }
+
 }
